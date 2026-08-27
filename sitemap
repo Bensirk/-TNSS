@@ -1,0 +1,134 @@
+# This Is Not a Safe Space — Site Spec v1
+
+**Type:** Culture/entertainment media site
+**Scope:** 5 pages for launch
+**Content model:** Full CMS-driven (articles published on an ongoing basis)
+**Status:** Handoff spec for development — pair with the wireframes shared alongside this doc
+
+---
+
+## 1. Site map
+
+1. Home
+2. Content Hub (archive/browse)
+3. Article Detail (single post template)
+4. About
+5. Contact / Contribute
+
+---
+
+## 2. Recommended stack
+
+- **CMS:** Headless CMS (Sanity, Contentful, or Storyblok) — culture/entertainment content is visual-heavy, so pick a CMS with strong native image handling and responsive image pipelines (all three qualify; Sanity's image CDN and hotspot cropping is a good fit if art direction on thumbnails matters).
+- **Frontend:** Next.js (or similar SSR/SSG framework) — needed for SEO on article pages and fast image-heavy grids.
+- **Rationale:** Article Detail and Content Hub both consume the same `Article` content type, so the schema needs to be finalized before either page's frontend logic is built.
+
+---
+
+## 3. Content model
+
+### Article
+| Field | Type | Notes |
+|---|---|---|
+| title | string | required |
+| slug | string | auto from title, editable |
+| category | reference | Film / Music / Nightlife / etc. |
+| tags | array of strings | multi-select |
+| featured image | image | required, drives card + hero + OG image |
+| excerpt | text | ~160 char, used in cards + meta description |
+| body | rich text / block content | CMS-native rich text |
+| author | reference | see Author type |
+| publish date | datetime | |
+| related articles | array of references | manual override; fallback to auto (same category) |
+
+### Author
+| Field | Type |
+|---|---|
+| name | string |
+| avatar | image |
+| bio | text |
+| social links | array |
+
+### Category
+| Field | Type |
+|---|---|
+| name | string |
+| slug | string |
+| description | text (optional, for category landing SEO) |
+
+---
+
+## 4. Page specs
+
+### 4.1 Home
+**Purpose:** brand entry point + surfacing latest/trending content.
+
+Components (top to bottom):
+- Nav bar: wordmark + primary category links
+- Hero: featured story (editorially pinned, full-bleed image + headline overlay)
+- Latest/trending grid: 3-column card grid, pulls most recent `Article` entries by publish date, image-forward cards
+- Newsletter signup: email capture, inline in a bordered panel
+
+**Data needs:** 1 pinned/featured article (manual CMS field, e.g. `isFeaturedHome` boolean) + N latest articles query.
+
+### 4.2 Content Hub
+**Purpose:** primary archive/browse experience.
+
+Components:
+- Category filter pills (all + one per Category)
+- Search input (client-side or CMS search API)
+- 2-column card grid: thumbnail, title, excerpt, author, date
+- Pagination (or infinite scroll — culture sites often favor infinite scroll; flag as a decision point for the dev)
+
+**Data needs:** paginated `Article` query filtered by category/search term.
+
+### 4.3 Article Detail
+**Purpose:** single article template.
+
+Components:
+- Category tag, headline, byline (author + date + read time)
+- Featured image
+- Body (CMS rich text renderer)
+- Tags row + share buttons
+- Related articles strip (3 cards — manual override field, fallback to same-category auto-query)
+
+**Data needs:** single `Article` by slug; related articles query.
+
+**Open decision:** comments/community features were left undecided by the client — recommend launching without them and revisiting post-launch once traffic patterns are known, since retrofitting a comment system is low-cost but retrofitting moderation tooling after a comment backlog exists is not.
+
+### 4.4 About
+**Purpose:** brand mission and editorial positioning.
+
+Components:
+- Manifesto/mission statement block (static CMS page or hardcoded — low change frequency)
+- Contributor grid (avatar + name, pulls from `Author` type)
+- Editorial stance statement + CTA into Contact
+
+**Data needs:** `Author` list query; static page content (can be a CMS singleton document rather than the `Article` type).
+
+### 4.5 Contact / Contribute
+**Purpose:** lead gen + pitch intake.
+
+Components:
+- Contact form: name, email, reason (dropdown: general / pitch / press), message
+- Pitch/contribute guidelines block (static content)
+- Social + press links
+
+**Data needs:** form submission handler (e.g. form service or serverless function — specify endpoint before dev starts); static guidelines content as CMS singleton.
+
+---
+
+## 5. Cross-page notes
+
+- **SEO:** Article Detail needs per-page meta title/description (derive from `title`/`excerpt`) and OG image (derive from `featured image`).
+- **Editorial workflow:** confirm with the client whether they need a draft/review state in the CMS before publish (most headless CMS options support this natively).
+- **Content taxonomy:** given the brand's provocative positioning, consider whether any articles need a content-note/tag mechanism — worth deciding at the schema level now rather than retrofitting.
+- **Responsive behavior:** all grids (Home trending, Content Hub, related articles) should collapse to single/double column on mobile — not detailed in the wireframes, which are desktop-first low-fi.
+
+---
+
+## 6. Out of scope for v1 (flag for later phases)
+
+- User comments / community features
+- User accounts or profiles
+- Video/podcast-specific templates (if the brand expands beyond written content)
